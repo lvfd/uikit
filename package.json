@@ -1,5 +1,5 @@
 {
-    "name": "uikit",
+    "name": "@lyufudi/uikit",
     "title": "UIkit",
     "description": "UIkit is a lightweight and modular front-end framework for developing fast and powerful web interfaces.",
     "version": "3.15.22",
@@ -22,7 +22,9 @@
         "release": "node build/release",
         "watch": "watch-run -i -p \"**/*.less\" -- node build/less",
         "eslint": "eslint src/js",
-        "eslint-fix": "eslint --fix src/js"
+        "eslint-fix": "eslint --fix src/js",
+        "login": "npm login --registry http://10.1.85.22:8081/repository/npm-internal",
+        "publish": "npm publish --registry http://10.1.85.22:8081/repository/npm-internal"
     },
     "repository": {
         "type": "git",

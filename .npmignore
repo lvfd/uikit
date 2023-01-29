@@ -9,6 +9,8 @@
 !/dist/css/uikit-core.min.css
 !/dist/css/uikit-core-rtl.css
 !/dist/css/uikit-core-rtl.min.css
+!/dist/css/uikit-dove-theme.css
+!/dist/css/uikit-dove-theme.min.css
 !/dist/js/
 /dist/js/*
 !/dist/js/uikit.js
