@@ -1,15 +1,13 @@
+import { keyMap } from '../mixin/utils';
 import Animations from './internal/lightbox-animations';
-import Container from '../mixin/container';
 import Modal from '../mixin/modal';
 import Slideshow from '../mixin/slideshow';
-import Togglable from '../mixin/togglable';
 import {
     $,
     addClass,
     append,
     attr,
     fragment,
-    getImage,
     getIndex,
     html,
     on,
@@ -21,7 +19,7 @@ import {
 } from 'uikit-util';
 
 export default {
-    mixins: [Container, Modal, Togglable, Slideshow],
+    mixins: [Modal, Slideshow],
 
     functional: true,
 
@@ -61,6 +59,12 @@ export default {
         const $el = $(this.template);
         const list = $(this.selList, $el);
         this.items.forEach(() => append(list, '<li>'));
+
+        const close = $('[uk-close]', $el);
+        const closeLabel = this.t('close');
+        if (close && closeLabel) {
+            close.dataset.i18n = JSON.stringify({ label: closeLabel });
+        }
 
         this.$mount(append(this.container, $el));
     },
@@ -134,18 +138,25 @@ export default {
                 return document;
             },
 
-            handler(e) {
+            handler({ keyCode }) {
                 if (!this.isToggled(this.$el) || !this.draggable) {
                     return;
                 }
 
-                switch (e.keyCode) {
-                    case 37:
-                        this.show('previous');
-                        break;
-                    case 39:
-                        this.show('next');
-                        break;
+                let i = -1;
+
+                if (keyCode === keyMap.LEFT) {
+                    i = 'previous';
+                } else if (keyCode === keyMap.RIGHT) {
+                    i = 'next';
+                } else if (keyCode === keyMap.HOME) {
+                    i = 0;
+                } else if (keyCode === keyMap.END) {
+                    i = 'last';
+                }
+
+                if (~i) {
+                    this.show(i);
                 }
             },
         },
@@ -215,12 +226,9 @@ export default {
                     type === 'image' ||
                     src.match(/\.(avif|jpe?g|jfif|a?png|gif|svg|webp)($|\?)/i)
                 ) {
-                    try {
-                        const { width, height } = await getImage(src, attrs.srcset, attrs.size);
-                        this.setItem(item, createEl('img', { src, width, height, alt, ...attrs }));
-                    } catch (e) {
-                        this.setError(item);
-                    }
+                    const img = createEl('img', { src, alt, ...attrs });
+                    on(img, 'load', () => this.setItem(item, img));
+                    on(img, 'error', () => this.setError(item));
 
                     // Video
                 } else if (type === 'video' || src.match(/\.(mp4|webm|ogv)($|\?)/i)) {
@@ -230,16 +238,10 @@ export default {
                         controls: '',
                         playsinline: '',
                         'uk-video': `${this.videoAutoplay}`,
+                        ...attrs,
                     });
 
-                    on(video, 'loadedmetadata', () => {
-                        attr(video, {
-                            width: video.videoWidth,
-                            height: video.videoHeight,
-                            ...attrs,
-                        });
-                        this.setItem(item, video);
-                    });
+                    on(video, 'loadedmetadata', () => this.setItem(item, video));
                     on(video, 'error', () => this.setError(item));
 
                     // Iframe
@@ -257,7 +259,7 @@ export default {
                     // YouTube
                 } else if (
                     (matches = src.match(
-                        /\/\/(?:.*?youtube(-nocookie)?\..*?[?&]v=|youtu\.be\/)([\w-]{11})[&?]?(.*)?/
+                        /\/\/(?:.*?youtube(-nocookie)?\..*?(?:[?&]v=|\/shorts\/)|youtu\.be\/)([\w-]{11})[&?]?(.*)?/
                     ))
                 ) {
                     this.setItem(
@@ -281,9 +283,7 @@ export default {
                                 `https://vimeo.com/api/oembed.json?maxwidth=1920&url=${encodeURI(
                                     src
                                 )}`,
-                                {
-                                    credentials: 'omit',
-                                }
+                                { credentials: 'omit' }
                             )
                         ).json();
 

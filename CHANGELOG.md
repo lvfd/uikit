@@ -1,5 +1,82 @@
 # Changelog
 
+## WIP
+
+### Fixed
+
+- Fix default i18n option for Modal dialogs
+- Fix Slideshow initially shows last slide first
+
+## 3.16.3 (February 27, 2023)
+
+### Fixed
+
+- Fix object type coercion
+
+## 3.16.2 (February 27, 2023)
+
+### Fixed
+
+- Fix event delegation did not delete `current` property causing parent event handler to trigger
+- Fix focusable elements within none visible slides are no longer focusable in Slider component
+- Fix opened Drop component prevents smooth scrolling of document on iOS
+
+## 3.16.1 (February 23, 2023)
+
+### Fixed
+
+- Fix missing dropnav.scss file from dist
+
+## 3.16.0 (February 23, 2023)
+
+### Added
+
+- Add WAI-ARIA roles, states and properties to interactive JavaScript components
+- Add WAI-ARIA keyboard interaction pattern to interactive JavaScript components
+- Add language internationalization (i18n) for interactive JavaScript components
+- Add `i18n` option to corresponding JavaScript components
+- Add Dropnav component
+- Add parent icon to Drop component
+- Add support for YouTube Shorts URLs in Lightbox component
+- Add Android, Android Robot, Apple and Microsoft icons
+- Add `uikit:init` event triggered on document before components initialize
+- Add `countdownstart`, `countdownstop` and `countdownend` events to Countdown component
+
+### Changed
+
+- IMPORTANT: Remove `.uk-dropdown-close` from Dropdown component. Use `uk-drop-close` instead
+- IMPORTANT: Remove `.uk-dropdown-grid` from Dropdown component. Use `uk-drop-grid` instead
+- IMPORTANT: Remove `.uk-navbar-dropdown-close` from Navbar component. Use `uk-drop-close` instead
+- IMPORTANT: Remove `.uk-navbar-dropdown-grid` from Navbar component. Use `uk-drop-grid` instead
+- IMPORTANT: Remove error message options in Upload component, use `i18n` option
+- IMPORTANT: Rename `labels` default property and option on `UIkit.modal` to `i18n`
+- Move functional CSS from Dropdown, Dropbar and Navbar component to Drop component
+
+### Removed
+
+- Remove `ajax()` util function, use native `fetch` instead
+- Remove `getImage()` util function
+
+## 3.15.25 (February 23, 2023)
+
+### Fixed
+
+- Fix Dropbar partially closing before opening when switching between Navbar items
+- Fix Parallax component updating too late during slide animation in Filter component
+
+## 3.15.24 (February 9, 2023)
+
+### Fixed
+
+- Fix Tooltip component appends to `container` option, prevents margins in scroll container
+- Fix regression in `scrollParents` function
+
+## 3.15.23 (February 1, 2023)
+
+### Fixed
+
+- Fix prevent background scrolling in Safari
+
 ## 3.15.22 (January 19, 2023)
 
 ### Added

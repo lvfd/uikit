@@ -1,7 +1,8 @@
+import I18n from './i18n';
 import Resize from './resize';
-import SliderAutoplay from './slider-autoplay';
-import SliderDrag from './slider-drag';
 import SliderNav from './slider-nav';
+import SliderDrag from './slider-drag';
+import SliderAutoplay from './slider-autoplay';
 import {
     $,
     children,
@@ -15,7 +16,7 @@ import {
 } from 'uikit-util';
 
 export default {
-    mixins: [SliderAutoplay, SliderDrag, SliderNav, Resize],
+    mixins: [SliderAutoplay, SliderDrag, SliderNav, Resize, I18n],
 
     props: {
         clsActivated: Boolean,
@@ -68,7 +69,7 @@ export default {
             },
 
             watch() {
-                this.$emit('resize');
+                this.$emit();
             },
         },
 
@@ -143,7 +144,11 @@ export default {
         },
 
         getIndex(index = this.index, prev = this.index) {
-            return clamp(getIndex(index, this.slides, prev, this.finite), 0, this.maxIndex);
+            return clamp(
+                getIndex(index, this.slides, prev, this.finite),
+                0,
+                Math.max(0, this.maxIndex)
+            );
         },
 
         getValidIndex(index = this.index, prevIndex = this.prevIndex) {
@@ -177,7 +182,7 @@ export default {
         },
 
         _translate(percent, prev = this.prevIndex, next = this.index) {
-            const transitioner = this._getTransitioner(prev !== next ? prev : false, next);
+            const transitioner = this._getTransitioner(prev === next ? false : prev, next);
             transitioner.translate(percent);
             return transitioner;
         },

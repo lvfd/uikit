@@ -9,12 +9,11 @@ import CleanCSS from 'clean-css';
 import html from 'rollup-plugin-html';
 import alias from '@rollup/plugin-alias';
 import modify from 'rollup-plugin-modify';
-import { babel } from '@rollup/plugin-babel';
 import replace from '@rollup/plugin-replace';
 import { basename, dirname, join } from 'path';
 import { exec as execImport } from 'child_process';
 import { rollup, watch as rollupWatch } from 'rollup';
-import { minify as esbuildMinify } from 'rollup-plugin-esbuild';
+import { default as esbuild, minify as esbuildMinify } from 'rollup-plugin-esbuild';
 
 const limit = pLimit(Number(process.env.cpus || 2));
 
@@ -110,30 +109,18 @@ export async function compile(file, dest, { external, globals, name, aliases, re
                     },
                 },
             }),
-            ...(debug
-                ? []
-                : [
-                      babel({
-                          presets: [
-                              [
-                                  '@babel/preset-env',
-                                  {
-                                      loose: true,
-                                      targets: { safari: '12' },
-                                      bugfixes: true,
-                                  },
-                              ],
-                          ],
-                          extensions: ['.js'],
-                          babelHelpers: 'bundled',
-                          retainLines: true,
-                          compact: false,
-                      }),
-                      modify({
-                          find: /(>)\n\s+|\n\s+(<)/,
-                          replace: (m, m1, m2) => `${m1 || ''} ${m2 || ''}`,
-                      }),
-                  ]),
+
+            esbuild({
+                target: 'safari12',
+                sourceMap: !!debug,
+                minify: false,
+            }),
+
+            !debug &&
+                modify({
+                    find: /(>)\n\s+|\n\s+(<)/,
+                    replace: (m, m1, m2) => `${m1 || ''} ${m2 || ''}`,
+                }),
         ],
     };
 
@@ -161,7 +148,6 @@ export async function compile(file, dest, { external, globals, name, aliases, re
                 debug
                     ? undefined
                     : esbuildMinify({
-                          banner: banner.trim(),
                           target: 'safari12',
                       }),
             ],

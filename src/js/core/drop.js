@@ -29,7 +29,7 @@ import {
     removeClass,
     within,
 } from 'uikit-util';
-import { isSameSiteAnchor, preventBackgroundScroll, preventOverscroll } from '../mixin/modal';
+import { isSameSiteAnchor, keyMap, preventBackgroundScroll } from '../mixin/utils';
 
 export let active;
 
@@ -105,15 +105,10 @@ export default {
     },
 
     connected() {
-        addClass(this.$el, this.clsDrop);
+        addClass(this.$el, 'uk-drop', this.clsDrop);
 
         if (this.toggle && !this.targetEl) {
-            this.targetEl = this.$create('toggle', query(this.toggle, this.$el), {
-                target: this.$el,
-                mode: this.mode,
-            }).$el;
-            attr(this.targetEl, 'aria-haspopup', true);
-            this.lazyload(this.targetEl);
+            this.targetEl = createToggleComponent(this);
         }
 
         this._style = (({ width, height }) => ({ width, height }))(this.$el.style);
@@ -132,7 +127,7 @@ export default {
             name: 'click',
 
             delegate() {
-                return `.${this.clsDrop}-close`;
+                return '.uk-drop-close';
             },
 
             handler(e) {
@@ -243,6 +238,8 @@ export default {
             self: true,
 
             handler(e, toggled) {
+                attr(this.targetEl, 'aria-expanded', toggled ? true : null);
+
                 if (!toggled) {
                     return;
                 }
@@ -262,60 +259,15 @@ export default {
 
                 this.tracker.init();
 
-                const update = () => this.$emit();
                 const handlers = [
-                    on(
-                        document,
-                        pointerDown,
-                        ({ target }) =>
-                            !within(target, this.$el) &&
-                            once(
-                                document,
-                                `${pointerUp} ${pointerCancel} scroll`,
-                                ({ defaultPrevented, type, target: newTarget }) => {
-                                    if (
-                                        !defaultPrevented &&
-                                        type === pointerUp &&
-                                        target === newTarget &&
-                                        !(this.targetEl && within(target, this.targetEl))
-                                    ) {
-                                        this.hide(false);
-                                    }
-                                },
-                                true
-                            )
-                    ),
-
-                    on(document, 'keydown', (e) => {
-                        if (e.keyCode === 27) {
-                            this.hide(false);
-                        }
-                    }),
-
-                    on(window, 'resize', update),
-
-                    (() => {
-                        const observer = observeResize(
-                            overflowParents(this.$el).concat(this.target),
-                            update
-                        );
-                        return () => observer.disconnect();
-                    })(),
-
-                    ...(this.autoUpdate
-                        ? [
-                              on([document, overflowParents(this.$el)], 'scroll', update, {
-                                  passive: true,
-                              }),
-                          ]
-                        : []),
-
-                    ...(this.bgScroll
-                        ? []
-                        : [preventOverscroll(this.$el), preventBackgroundScroll()]),
+                    listenForResize(this),
+                    listenForEscClose(this),
+                    listenForBackgroundClose(this),
+                    this.autoUpdate && listenForScroll(this),
+                    !this.bgScroll && preventBackgroundScroll(this.$el),
                 ];
 
-                once(this.$el, 'hide', () => handlers.forEach((handler) => handler()), {
+                once(this.$el, 'hide', () => handlers.forEach((handler) => handler && handler()), {
                     self: true,
                 });
             },
@@ -425,7 +377,7 @@ export default {
         },
 
         position() {
-            removeClass(this.$el, `${this.clsDrop}-stack`);
+            removeClass(this.$el, 'uk-drop-stack');
             css(this.$el, this._style);
 
             // Ensure none positioned element does not generate scrollbars
@@ -453,13 +405,15 @@ export default {
 
             const maxWidth = viewports[0].width - 2 * viewportOffset;
 
+            this.$el.hidden = false;
+
+            css(this.$el, 'maxWidth', '');
+
             if (this.$el.offsetWidth > maxWidth) {
-                addClass(this.$el, `${this.clsDrop}-stack`);
+                addClass(this.$el, 'uk-drop-stack');
             }
 
             css(this.$el, 'maxWidth', maxWidth);
-
-            this.$el.hidden = false;
 
             this.positionAt(this.$el, this.target, this.boundary);
 
@@ -499,4 +453,61 @@ function getPositionedElements(el) {
 
 function getViewport(el, target) {
     return offsetViewport(overflowParents(target).find((parent) => within(el, parent)));
+}
+
+function createToggleComponent(drop) {
+    const { $el } = drop.$create('toggle', query(drop.toggle, drop.$el), {
+        target: drop.$el,
+        mode: drop.mode,
+    });
+    attr($el, 'aria-haspopup', true);
+    drop.lazyload($el);
+
+    return $el;
+}
+
+function listenForResize(drop) {
+    const update = () => drop.$emit();
+    const off = on(window, 'resize', update);
+    const observer = observeResize(overflowParents(drop.$el).concat(drop.target), update);
+    return () => {
+        observer.disconnect();
+        off();
+    };
+}
+
+function listenForScroll(drop) {
+    return on([document, ...overflowParents(drop.$el)], 'scroll', () => drop.$emit(), {
+        passive: true,
+    });
+}
+
+function listenForEscClose(drop) {
+    return on(document, 'keydown', (e) => {
+        if (e.keyCode === keyMap.ESC) {
+            drop.hide(false);
+        }
+    });
+}
+
+function listenForBackgroundClose(drop) {
+    return on(document, pointerDown, ({ target }) => {
+        if (!within(target, drop.$el)) {
+            once(
+                document,
+                `${pointerUp} ${pointerCancel} scroll`,
+                ({ defaultPrevented, type, target: newTarget }) => {
+                    if (
+                        !defaultPrevented &&
+                        type === pointerUp &&
+                        target === newTarget &&
+                        !(drop.targetEl && within(target, drop.targetEl))
+                    ) {
+                        drop.hide(false);
+                    }
+                },
+                true
+            );
+        }
+    });
 }
