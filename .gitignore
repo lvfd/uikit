@@ -17,8 +17,8 @@
 /node_modules
 /tests/js/test*
 /tests/css/*
-custom
-themes.json
+# custom
+# themes.json
 .DS_Store
 /.idea
 /.vscode
